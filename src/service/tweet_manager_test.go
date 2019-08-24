@@ -3,6 +3,7 @@ package service_test
 import (
 	"github.com/RodrigoMansillaMeli/twitterGoPractica/src/domain"
 	"github.com/RodrigoMansillaMeli/twitterGoPractica/src/service"
+	"strings"
 	"testing"
 )
 
@@ -283,6 +284,7 @@ func TestPublishedTweetIsSavedToExternalResource(t *testing.T) {
 
 	tweet := domain.NewTextTweet("grupoesfera", "Texto de tweetWriter")
 
+
 	// Operation
 	id, _ := tweetManager.PublishTweet(tweet)
 
@@ -301,6 +303,35 @@ func TestPublishedTweetIsSavedToExternalResource(t *testing.T) {
 	}
 }
 
+func TestCanSearchForTweetContainingText(t *testing.T) {
+	// Initialization
+	var tweetWriter service.TweetWriter
+	tweetWriter = service.NewMemoryTweetWriter()
+	tweetManager := service.NewTweetManager(tweetWriter)
+	// Create and publish a tweet
+	tweet := domain.NewTextTweet("grupoesfera", "This is my first tweet")
+	secondTweet := domain.NewTextTweet("grupoesfera", "This is my second tweet")
+	tweetManager.PublishTweet(tweet)
+	tweetManager.PublishTweet(secondTweet)
+
+	// Operation
+	searchResult := make(chan domain.Tweet)
+	query := "first"
+	tweetManager.SearchTweetsContaining(query, searchResult)
+
+	// Validation
+	foundTweet := <-searchResult //Voy leyendo del canal
+
+	if foundTweet == nil {
+		t.Error("Tweet was not founded")
+		return
+	}
+	if !strings.Contains(foundTweet.GetText(), query) {
+		t.Errorf("Word not found in tweet")
+		return
+	}
+
+}
 func isValidTweet(t *testing.T, tweet domain.Tweet, id int, user string, text string) (bool){
 	if tweet.GetUser() != user || tweet.GetText() != text || tweet.GetId() != id {
 		return false

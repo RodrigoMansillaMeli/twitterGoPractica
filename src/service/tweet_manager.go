@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/RodrigoMansillaMeli/twitterGoPractica/src/domain"
+	"strings"
 )
 
 type TweetManager struct {
@@ -75,6 +76,21 @@ func (manager *TweetManager) CountTweetsByUser(user string) int {
 	return counter
 }
 
-func (manager *TweetManager) GetTweetsByUser(user string) map[string][]domain.Tweet {
-	return manager.TweetsByUser
+func (manager *TweetManager) GetTweetsByUser(user string) []domain.Tweet {
+	return manager.TweetsByUser[user]
+}
+
+func (manager *TweetManager) SearchTweetsContaining(query string, ch chan domain.Tweet) {
+	go manager.saveTweetInChannel(query, ch)
+}
+
+func (manager *TweetManager) saveTweetInChannel(query string, ch chan domain.Tweet) {
+	tweets := manager.Tweets
+	tweetsSize := len(tweets)
+
+	for i := 0; i < tweetsSize; i++ {
+		if strings.Contains(tweets[i].GetText(), query) {
+			ch <- tweets[i]
+		}
+	}
 }
